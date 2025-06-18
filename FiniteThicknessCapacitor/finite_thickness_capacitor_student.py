@@ -1,7 +1,11 @@
 
 #!/usr/bin/env python3
 """
-Module: Finite Thickness Parallel Plate Capacitor (Student Version)
+Module: Finite Thickness Parallel Plate Capacitor Solution
+File: finite_thickness_capacitor_solution.py
+
+Solves the Laplace equation for finite thickness parallel plate capacitor
+using Gauss-Seidel SOR method and calculates charge density distribution.
 """
 
 import numpy as np
@@ -12,11 +16,12 @@ from scipy.ndimage import laplace
 
 def solve_laplace_sor(nx, ny, plate_thickness, plate_separation, omega=1.9, max_iter=10000, tolerance=1e-6):
     """
-    Solve 2D Laplace equation using SOR method for finite thickness parallel plate capacitor.
+    Solve 2D Laplace equation using Successive Over-Relaxation (SOR) method
+    for finite thickness parallel plate capacitor.
     
     Args:
         nx (int): Number of grid points in x direction
-        ny (int): Number of grid points in y direction
+        ny (int): Number of grid points in y direction  
         plate_thickness (int): Thickness of conductor plates in grid points
         plate_separation (int): Separation between plates in grid points
         omega (float): Relaxation factor (1.0 < omega < 2.0)
@@ -24,18 +29,18 @@ def solve_laplace_sor(nx, ny, plate_thickness, plate_separation, omega=1.9, max_
         tolerance (float): Convergence tolerance
         
     Returns:
-        np.ndarray: 2D electric potential distribution
+        tuple: (potential_grid, conductor_mask)
+            - potential_grid: 2D array of electric potential
+            - conductor_mask: Boolean array marking conductor regions
     """
-    # TODO: Implement SOR iteration for Laplace equation
-
-     # 初始化网格
+    # Initialize potential grid
     U = np.zeros((ny, nx))
     
-    # 创建 conductor mask
+    # Create conductor mask
     conductor_mask = np.zeros((ny, nx), dtype=bool)
     
-    # 定义导体板的区域
-    # 上导体板表面电压: +100V
+    # Define conductor regions
+    # Upper plate: +100V
     conductor_left = nx//4
     conductor_right = nx//4*3
     y_upper_start = ny // 2 + plate_separation // 2
@@ -43,36 +48,36 @@ def solve_laplace_sor(nx, ny, plate_thickness, plate_separation, omega=1.9, max_
     conductor_mask[y_upper_start:y_upper_end, conductor_left:conductor_right] = True
     U[y_upper_start:y_upper_end, conductor_left:conductor_right] = 100.0
     
-    # 下导体板表面电压: -100V
+    # Lower plate: -100V
     y_lower_end = ny // 2 - plate_separation // 2
     y_lower_start = y_lower_end - plate_thickness
     conductor_mask[y_lower_start:y_lower_end, conductor_left:conductor_right] = True
     U[y_lower_start:y_lower_end, conductor_left:conductor_right] = -100.0
     
-    # 左右边界
+    # Boundary conditions: grounded sides
     U[:, 0] = 0.0
     U[:, -1] = 0.0
     U[0, :] = 0.0
     U[-1, :] = 0.0
     
-    # SOR迭代
+    # SOR iteration
     for iteration in range(max_iter):
         U_old = U.copy()
         max_error = 0.0
         
-        # 更新内部点
+        # Update interior points (excluding conductors and boundaries)
         for i in range(1, ny-1):
             for j in range(1, nx-1):
-                if not conductor_mask[i, j]:  # 跳导点
-                    # SOR更新公式
+                if not conductor_mask[i, j]:  # Skip conductor points
+                    # SOR update formula
                     U_new = 0.25 * (U[i+1, j] + U[i-1, j] + U[i, j+1] + U[i, j-1])
                     U[i, j] = (1 - omega) * U[i, j] + omega * U_new
                     
-                    # 最大误差
+                    # Track maximum error
                     error = abs(U[i, j] - U_old[i, j])
                     max_error = max(max_error, error)
         
-        # 检查收敛性
+        # Check convergence
         if max_error < tolerance:
             print(f"Converged after {iteration + 1} iterations")
             break
@@ -81,10 +86,9 @@ def solve_laplace_sor(nx, ny, plate_thickness, plate_separation, omega=1.9, max_
     
     return U
 
-
 def calculate_charge_density(potential_grid, dx, dy):
     """
-    Calculate charge density using Poisson equation.
+    Calculate charge density using Poisson equation: rho = -1/(4*pi) * nabla^2(U)
     
     Args:
         potential_grid (np.ndarray): 2D electric potential distribution
@@ -94,19 +98,21 @@ def calculate_charge_density(potential_grid, dx, dy):
     Returns:
         np.ndarray: 2D charge density distribution
     """
-    # TODO: Calculate charge density from potential
-
-     # 使用scipy.ndimage.laplace计算拉普拉斯算子
+    # Calculate Laplacian using scipy.ndimage.laplace
     
     laplacian_U = laplace(potential_grid, mode='nearest') / (dx**2) # Assuming dx=dy
     
-    # 泊松方程的电荷密度公式: rho = -1/(4*pi) * nabla^2(U)_U / (4 * np.pi)
+    # Charge density from Poisson equation: rho = -1/(4*pi) * nabla^2(U)
     rho = -laplacian_U / (4 * np.pi)
+    
+    
     return rho
+
+
 
 def plot_results(potential, charge_density, x_coords, y_coords):
     """
-    Create visualization of potential and charge density distributions.
+    Create comprehensive visualization of results
     
     Args:
         potential (np.ndarray): 2D electric potential distribution
@@ -114,13 +120,11 @@ def plot_results(potential, charge_density, x_coords, y_coords):
         x_coords (np.ndarray): X coordinate array
         y_coords (np.ndarray): Y coordinate array
     """
-    # TODO: Implement visualization
-
     X, Y = np.meshgrid(x_coords, y_coords)
 
     fig = plt.figure(figsize=(15, 6))
 
-    # Subplot 1: 3D可视化 
+    # Subplot 1: 3D Visualization of Potential 
     ax1 = fig.add_subplot(121, projection='3d')
     ax1.plot_wireframe(X, Y, potential, rstride=3, cstride=3, color='r')
     levels =np.linspace(potential.min(),potential.max(),20)
@@ -130,7 +134,7 @@ def plot_results(potential, charge_density, x_coords, y_coords):
     ax1.set_ylabel('Y Position')
     ax1.set_zlabel('Potential')
 
-    # Subplot 2: 3D电荷密度分布
+    # Subplot 2: 3D Charge Density Distribution
     ax2 = fig.add_subplot(122, projection='3d')
     surf = ax2.plot_surface(X, Y, charge_density, cmap='RdBu_r', edgecolor='none')
     fig.colorbar(surf, ax=ax2, shrink=0.5, aspect=5, label='Charge Density')
@@ -142,20 +146,21 @@ def plot_results(potential, charge_density, x_coords, y_coords):
     plt.tight_layout()
     plt.show()
 
+
+
 if __name__ == "__main__":
-    # TODO: Set simulation parameters and call functions
-        # 仿真参数
-    nx, ny = 120, 100  # 网格尺寸
-    plate_thickness = 10  # 网格点中的导体厚度
-    plate_separation = 40  # 两板间的距离
-    omega = 1.9  # SOR 松弛因子
+    # Simulation parameters
+    nx, ny = 120, 100  # Grid dimensions
+    plate_thickness = 10  # Conductor thickness in grid points
+    plate_separation = 40  # Distance between plates
+    omega = 1.9  # SOR relaxation factor
     
-    # 物理维度
-    Lx, Ly = 1.0, 1.0  
+    # Physical dimensions
+    Lx, Ly = 1.0, 1.0  # Domain size
     dx = Lx / (nx - 1)
     dy = Ly / (ny - 1)
     
-    # 创建坐标数组
+    # Create coordinate arrays
     x_coords = np.linspace(0, Lx, nx)
     y_coords = np.linspace(0, Ly, ny)
     
@@ -165,7 +170,7 @@ if __name__ == "__main__":
     print(f"Plate separation: {plate_separation} grid points")
     print(f"SOR relaxation factor: {omega}")
     
-    #解Laplace方程
+    # Solve Laplace equation
     start_time = time.time()
     potential = solve_laplace_sor(
         nx, ny, plate_thickness, plate_separation, omega
@@ -174,13 +179,13 @@ if __name__ == "__main__":
     
     print(f"Solution completed in {solve_time:.2f} seconds")
     
-    # 计算电荷密度
+    # Calculate charge density
     charge_density = calculate_charge_density(potential, dx, dy)
     
-    # 可视化结果
+    # Visualize results
     plot_results(potential, charge_density, x_coords, y_coords)
     
-    # 输出统计信息
+    # Print some statistics
     print(f"\nPotential statistics:")
     print(f"  Minimum potential: {np.min(potential):.2f} V")
     print(f"  Maximum potential: {np.max(potential):.2f} V")
