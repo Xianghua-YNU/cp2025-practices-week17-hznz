@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,17 +28,24 @@ def solve_poisson_equation(M: int = 100, target: float = 1e-6, max_iterations: i
     # 创建电荷密度数组
     rho = np.zeros((M+1, M+1), dtype=float)
     
-    # 设置电荷分布
-    # 计算电荷区域的边界索引
-    pos_x_start = int(0.6 * M)
-    pos_x_end = int(0.8 * M) + 1
-    pos_y_start = int(0.2 * M)
-    pos_y_end = int(0.4 * M) + 1
+    # 设置电荷分布 - 固定位置（与测试用例一致）
+    # 正电荷区域：60:80, 20:40（对于M=100）
+    # 负电荷区域：20:40, 60:80（对于M=100）
+    # 对于不同的M，按比例缩放电荷区域
     
-    neg_x_start = int(0.2 * M)
-    neg_x_end = int(0.4 * M) + 1
-    neg_y_start = int(0.6 * M)
-    neg_y_end = int(0.8 * M) + 1
+    # 计算缩放因子
+    scale = M / 100.0
+    
+    # 计算电荷区域边界
+    pos_x_start = int(60 * scale)
+    pos_x_end = int(80 * scale) + 1
+    pos_y_start = int(20 * scale)
+    pos_y_end = int(40 * scale) + 1
+    
+    neg_x_start = int(20 * scale)
+    neg_x_end = int(40 * scale) + 1
+    neg_y_start = int(60 * scale)
+    neg_y_end = int(80 * scale) + 1
     
     # 正电荷区域
     rho[pos_x_start:pos_x_end, pos_y_start:pos_y_end] = 1.0
@@ -88,22 +96,23 @@ def visualize_solution(phi: np.ndarray, M: int = 100) -> None:
     plt.figure(figsize=(10, 8))
     
     # 绘制电势分布
-    im = plt.imshow(phi.T, extent=[0, M, 0, M], origin='lower', cmap='RdBu_r')
+    im = plt.imshow(phi, extent=[0, M, 0, M], origin='lower', cmap='RdBu_r')
     
     # 添加颜色条
     cbar = plt.colorbar(im)
     cbar.set_label('电势 (V)', fontsize=12)
     
     # 计算电荷区域
-    pos_x_start = int(0.6 * M)
-    pos_x_end = int(0.8 * M)
-    pos_y_start = int(0.2 * M)
-    pos_y_end = int(0.4 * M)
+    scale = M / 100.0
+    pos_x_start = int(60 * scale)
+    pos_x_end = int(80 * scale)
+    pos_y_start = int(20 * scale)
+    pos_y_end = int(40 * scale)
     
-    neg_x_start = int(0.2 * M)
-    neg_x_end = int(0.4 * M)
-    neg_y_start = int(0.6 * M)
-    neg_y_end = int(0.8 * M)
+    neg_x_start = int(20 * scale)
+    neg_x_end = int(40 * scale)
+    neg_y_start = int(60 * scale)
+    neg_y_end = int(80 * scale)
     
     # 标注正电荷位置
     plt.fill(
