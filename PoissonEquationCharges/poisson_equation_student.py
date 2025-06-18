@@ -37,11 +37,13 @@ def solve_poisson_equation(M: int = 100, target: float = 1e-6, max_iterations: i
     scale = M / 100.0
     
     # 计算电荷区域边界
+    # 正电荷区域 (x: 60-80, y: 20-40)
     pos_x_start = int(60 * scale)
     pos_x_end = int(80 * scale) + 1
     pos_y_start = int(20 * scale)
     pos_y_end = int(40 * scale) + 1
     
+    # 负电荷区域 (x: 20-40, y: 60-80)
     neg_x_start = int(20 * scale)
     neg_x_end = int(40 * scale) + 1
     neg_y_start = int(60 * scale)
@@ -67,11 +69,11 @@ def solve_poisson_equation(M: int = 100, target: float = 1e-6, max_iterations: i
         
         # 使用有限差分公式更新内部网格点
         phi[1:-1, 1:-1] = 0.25 * (
-            phi_prev[2:, 1:-1] +    # i+1,j
-            phi_prev[:-2, 1:-1] +   # i-1,j
-            phi_prev[1:-1, 2:] +    # i,j+1
-            phi_prev[1:-1, :-2] +   # i,j-1
-            h * h * rho[1:-1, 1:-1] # 电荷密度项
+            phi_prev[0:-2, 1:-1] +   # i-1,j
+            phi_prev[2:, 1:-1] +     # i+1,j
+            phi_prev[1:-1, 0:-2] +   # i,j-1
+            phi_prev[1:-1, 2:] +     # i,j+1
+            h * h * rho[1:-1, 1:-1]  # 电荷密度项
         )
         
         # 计算最大变化量
@@ -104,11 +106,13 @@ def visualize_solution(phi: np.ndarray, M: int = 100) -> None:
     
     # 计算电荷区域
     scale = M / 100.0
+    # 正电荷区域
     pos_x_start = int(60 * scale)
     pos_x_end = int(80 * scale)
     pos_y_start = int(20 * scale)
     pos_y_end = int(40 * scale)
     
+    # 负电荷区域
     neg_x_start = int(20 * scale)
     neg_x_end = int(40 * scale)
     neg_y_start = int(60 * scale)
