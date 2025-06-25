@@ -19,30 +19,37 @@ def solve_ode(h, g, max_iter=10000, tol=1e-6):
     
     返回:
         tuple: (时间数组, 解数组)
-    
-    物理背景: 质量为1kg的球从高度x=0抛出，10秒后回到x=0
-    数值方法: 松弛迭代法，迭代公式 x(t) = 0.5*h²*g + 0.5*[x(t+h)+x(t-h)]
-    
-    实现步骤:
-    1. 初始化时间数组和解数组
-    2. 应用松弛迭代公式直到收敛
-    3. 返回时间和解数组
     """
-    # 初始化时间数组
+    # 初始化时间数组（确保包含t=10）
     t = np.arange(0, 10 + h, h)
     
-    # 初始化解数组，边界条件已满足：x[0] = x[-1] = 0
-    x = np.zeros(t.size)
+    # 初始化解数组（满足边界条件）
+    x = np.zeros_like(t)
     
-    # TODO: 实现松弛迭代算法
-    # 提示：
-    # 1. 设置初始变化量 delta = 1.0
-    # 2. 当 delta > tol 时继续迭代
-    # 3. 对内部点应用公式：x_new[1:-1] = 0.5 * (h*h*g + x[2:] + x[:-2])
-    # 4. 计算最大变化量：delta = np.max(np.abs(x_new - x))
-    # 5. 更新解：x = x_new
+    # 初始化变化量
+    delta = float('inf')
+    iteration = 0
     
-    raise NotImplementedError(f"请在 {__file__} 中实现此函数")
+    # 松弛迭代算法
+    while delta > tol and iteration < max_iter:
+        # 保存上一次的解
+        x_old = x.copy()
+        
+        # 更新内部点 (索引1到倒数第二个)
+        # 迭代公式: x_i = 0.5*(h²g + x_{i+1} + x_{i-1})
+        x[1:-1] = 0.5 * (h*h*g + x_old[2:] + x_old[:-2])
+        
+        # 计算最大变化量
+        delta = np.max(np.abs(x - x_old))
+        
+        # 更新迭代计数
+        iteration += 1
+    
+    # 检查是否达到最大迭代次数
+    if iteration >= max_iter:
+        print(f"警告: 达到最大迭代次数 {max_iter} 次，当前误差 {delta:.2e} > {tol:.2e}")
+    
+    return t, x
 
 if __name__ == "__main__":
     # 测试参数
